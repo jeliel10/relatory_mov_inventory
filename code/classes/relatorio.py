@@ -210,24 +210,30 @@ class Functions():
                                 """, (self.data_inicial, self.data_final))
 
         searchTar2 = self.cur.fetchall()
+
+        for i in searchTar2:
+            print(i)
         # lista2 = []
         # for i in searchTar2:
         #     lista2.append(i[1])
 
-        bancos = ['CONTA CAIXA - CEF', 'CONTA INTERNA (CAIXA)', 'CONTA SICRED']
+        bancos = ['CONTA CAIXA - CEF', 'CONTA INTERNA', 'CONTA SICRED']
 
         lista_teste = []
 
         for i in bancos:
             lista_teste.append([i, 0])
 
+        print("LISTA TESTE: ", end= "")
+        print(lista_teste)
+
         for i in lista_teste:
             for j in range(0, len(searchTar2)):
                 if i[0] == searchTar2[j][0]:
                     i[1] = searchTar2[j][1]
 
-        # print("Lista teste: ", end="")
-        # print(lista_teste)
+        print("LISTA TESTE APÓS MUDANÇAS: ", end="")
+        print(lista_teste)
 
         lista2 = []
         for i in lista_teste:
@@ -329,7 +335,7 @@ class Functions():
             for j in range(0, len(i)):
                 i[j] = i[j].replace('_', '.')
 
-        print(self.lista_final)
+        # print(self.lista_final)
 
         for i in self.lista_final:
             self.list.insert("", END, values=i)
@@ -461,7 +467,7 @@ class Speds(Relatorios, Functions):
     cor_texto_titulo = "Black"
     cor_botoes = "Silver"
     img = PhotoImage(
-        file="C:\\APS\\Util\\Meus Estudos\\PYTHON\\RelatorioMovimentacaoEstoque\\code\\imagens\\FUNDO3.png")
+       file="C:\\APS\\GenixGer\\Client\\FUNDO3.png")
     Label(window_sped, image=img).pack()
 
     def __init__(self):
@@ -471,12 +477,12 @@ class Speds(Relatorios, Functions):
         self.create_labels()
         self.create_buttons()
         self.list_frame()
-        self.select_bd()
+        # self.select_bd()
         self.window_sped.mainloop()
 
     def home(self):
         self.window_sped.title("Relatório de Saldo de Contas " + (" " * 50) + "Fênix Tecnologia")
-        self.window_sped.geometry("742x353")
+        self.window_sped.geometry("350x350")
         # self.window_sped.configure(background= self.cor_de_fundo)
         self.window_sped.resizable(True, True)
 
@@ -515,27 +521,28 @@ class Speds(Relatorios, Functions):
         # self.frame_1.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.15)
 
         self.frame_2 = Frame(self.window_sped,
-                             bd=4,
-                             bg=self.cor_dentro_frame,
-                             highlightbackground=self.cor_bordas_frame,
-                             highlightthickness=1)
-        self.frame_2.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.28)
+                            bd=4,
+                            bg= self.cor_dentro_frame,
+                            highlightbackground= self.cor_bordas_frame,
+                            highlightthickness=1)
+        self.frame_2.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.2)
 
-        # self.frame_3 = Frame(self.new_window,
-        #                             bd= 4,
-        #                             bg= self.cor_dentro_frame,
-        #                             highlightbackground= self.cor_bordas_frame,
-        #                             highlightthickness= 5)
-        # self.frame_3.place(rely= 0.42, relx= 0.01, relwidth= 0.98, relheight= 0.35)
+        self.frame_3 = Frame(self.window_sped,
+                                   bd= 4,
+                                   bg= self.cor_dentro_frame,
+                                   highlightbackground= self.cor_bordas_frame,
+                                   highlightthickness= 1)
+        self.frame_3.place(rely= 0.25, relx= 0.01, relwidth= 0.98, relheight= 0.5)
+        # Label(self.frame_3, image= self.img).pack()
 
-    def format_cpf(self, event=None):
+    def format_data_inicial(self, event=None):
 
         """ ESSE CÓDIGO É RESPONSAVEL POR COLOCAR OS PONTOS E O TRAÇO DE UM CPF AUTOMATICAMENTE
         EU PRECISO ALTERAR NELE PARA COLOCAR SOMENTE AS BARRAS DAS DATAS.
         LINK DO STACKOVERFLOW: https://pt.stackoverflow.com/questions/492705/criando-um-entry-formatado-para-cpf-em-python-tkinter
         """
 
-        text = self.entry_data_inicial.get().replace(".", "").replace("-", "")[:11]
+        text = self.entry_data_inicial.get().replace("/", "")[:8]
         new_text = ""
 
         if event.keysym.lower() == "backspace": return
@@ -543,36 +550,64 @@ class Speds(Relatorios, Functions):
         for index in range(len(text)):
 
             if not text[index] in "0123456789": continue
-            if index in [2, 5]:
-                new_text += text[index] + "."
-            elif index == 8:
-                new_text += text[index] + "-"
+            if index in [1, 3]:
+                new_text += text[index] + "/"
+            # elif index == 8:
+            #     new_text += text[index] + "-"
             else:
                 new_text += text[index]
 
         self.entry_data_inicial.delete(0, "end")
         self.entry_data_inicial.insert(0, new_text)
 
+    def format_data_final(self, event=None):
+
+        """ ESSE CÓDIGO É RESPONSAVEL POR COLOCAR OS PONTOS E O TRAÇO DE UM CPF AUTOMATICAMENTE
+        EU PRECISO ALTERAR NELE PARA COLOCAR SOMENTE AS BARRAS DAS DATAS.
+        LINK DO STACKOVERFLOW: https://pt.stackoverflow.com/questions/492705/criando-um-entry-formatado-para-cpf-em-python-tkinter
+        """
+
+        text2 = self.entry_data_final.get().replace("/", "")[:8]
+        new_text2= ""
+
+        if event.keysym.lower() == "backspace": return
+
+        for index in range(len(text2)):
+
+            if not text2[index] in "0123456789": continue
+            if index in [1, 3]:
+                new_text2 += text2[index] + "/"
+            else:
+                new_text2 += text2[index]
+
+        self.entry_data_final.delete(0, "end")
+        self.entry_data_final.insert(0, new_text2)
+
     def create_labels(self):
-        self.lb_title = Label(self.frame_2, text="RELATÓRIO DE SALDO DE CONTAS", font="-weight bold -size 18",
+        self.lb_title = Label(self.frame_2, text="RELATÓRIO", font="-weight bold -size 15",
                               bg=self.cor_dentro_frame, fg=self.cor_texto_titulo)
         self.lb_title.place(rely=0.01, relx=0.12, relwidth=0.8)
 
-        self.lb_data_inicial = Label(self.frame_2, text="Data Inicial:", font=20, bg=self.cor_botoes)
-        self.lb_data_inicial.place(rely=0.53, relx=0.01, relwidth=0.12)
+        self.lb_title_2 = Label(self.frame_2, text= "SALDO DE CONTAS", font= "-weight bold -size 15",
+                                bg= self.cor_dentro_frame, fg= self.cor_texto_titulo)
+        self.lb_title_2.place(rely=0.4, relx=0.12, relwidth=0.8)
+
+        self.lb_data_inicial = Label(self.frame_3, text="Data Inicial:", font=90, bg=self.cor_botoes)
+        self.lb_data_inicial.place(rely=0.1, relx=0.08, relwidth=0.25)
 
         """ CÓDIGO DA ENTRY DATA INICIAL ALTERADO JÁ PARA COLOCAR AUTOMATICAMENTE AS BARRAS.
         """
-        self.entry_data_inicial = Entry(self.frame_2)
-        self.entry_data_inicial.place(rely=0.53, relx=0.135, relwidth=0.12)
-        self.entry_data_inicial.bind("<KeyRelease>", self.format_cpf)
+        self.entry_data_inicial = Entry(self.frame_3)
+        self.entry_data_inicial.place(rely=0.1, relx=0.4, relwidth=0.23)
+        self.entry_data_inicial.bind("<KeyRelease>", self.format_data_inicial)
         # self.entry_data_inicial.pack()
 
-        self.lb_data_final = Label(self.frame_2, text="Data Final:", font=20, bg=self.cor_botoes)
-        self.lb_data_final.place(rely=0.53, relx=0.28, relwidth=0.12)
+        self.lb_data_final = Label(self.frame_3, text="Data Final:", font=90, bg=self.cor_botoes)
+        self.lb_data_final.place(rely=0.3, relx=0.08, relwidth=0.25)
 
-        self.entry_data_final = Entry(self.frame_2)
-        self.entry_data_final.place(rely=0.53, relx=0.407, relwidth=0.12)
+        self.entry_data_final = Entry(self.frame_3)
+        self.entry_data_final.place(rely=0.3, relx=0.4, relwidth=0.23)
+        self.entry_data_final.bind("<KeyRelease>", self.format_data_final)
 
         date_now = date.today()
         mes_now = date_now.month
@@ -627,19 +662,19 @@ class Speds(Relatorios, Functions):
         # self.bt_buscar = Button(self.frame_2, text= "Buscar", background= self.cor_botoes, bd= 5, command= self.search_sped)
         # self.bt_buscar.place(rely= 0.01, relx= 0.3, relwidth= 0.1)
 
-        self.bt_relat = Button(self.frame_2, text="Imprimir", background=self.cor_botoes, bd=5,
+        self.bt_relat = Button(self.frame_3, text="Visualizar", background=self.cor_botoes, bd=5,
                                command=self.geraRelatCliente)
-        self.bt_relat.place(rely=0.53, relx=0.6, relwidth=0.1)
+        self.bt_relat.place(rely=0.5, relx=0.08, relwidth=0.2)
 
-        self.bt_quit = Button(self.frame_2, text="Sair", background=self.cor_botoes, bd=5,
+        self.bt_quit = Button(self.frame_3, text="Sair", background=self.cor_botoes, bd=5,
                               command=self.window_sped.destroy)
-        self.bt_quit.place(rely=0.53, relx=0.75, relwidth=0.1)
+        self.bt_quit.place(rely=0.5, relx=0.4, relwidth=0.12)
 
-        self.bt_config = Button(self.frame_2, text= "Config", background= self.cor_botoes, bd= 5, command= self.openNewWindow)
-        self.bt_config.place(rely= 0.53, relx= 0.9, relwidth= 0.1)
+        self.bt_config = Button(self.frame_3, text= "Config", background= self.cor_botoes, bd= 5, command= self.openNewWindow)
+        self.bt_config.place(rely= 0.5, relx= 0.8, relwidth= 0.17)
 
     def list_frame(self):
-        self.list = ttk.Treeview(self.frame_2, height=3, columns=("col1", "col2", "col3", "col4", "col5", "col6"))
+        self.list = ttk.Treeview(self.frame_3, height=3, columns=("col1", "col2", "col3", "col4", "col5", "col6"))
 
         self.list.heading("#0", text="")
         self.list.heading("#1", text="Conta Banco")
