@@ -12,11 +12,15 @@ window_sped = Tk()
 class Functions():
 
     caminho_banco = 'C:\\APS\\GenixGer\\Server\\Database\\UNIQUE.FDB'
+    host = 'localhost'
+    porta = 3050
     def conectar_bd(self):
+
+        print("Iniciando conexão")
         self.conn = firebirdsql.connect(
-            host='localhost',
+            host= self.host,
             database= self.caminho_banco,
-            port=3050,
+            port= self.porta,
             user='SYSDBA',
             password='masterkey'
         )
@@ -28,23 +32,16 @@ class Functions():
     def alterar_bd(self):
 
         self.caminho_banco = self.entry_caminho_banco.get()
+        self.host = self.entry_host.get()
+        self.porta = self.entry_porta.get()
         self.conectar_bd()
+
+        print(self.host)
+        print(self.porta)
 
 
     def desconecta_bd(self):
         self.conn.close()
-
-    def select_bd(self):
-        self.list.delete(*self.list.get_children())
-        self.conectar_bd()
-        lista = self.cur.execute("""
-                            SELECT DESCCONTA 
-                            FROM BANCOCONTA 
-                            ORDER BY DESCCONTA ASC;
-                            """)
-        for i in lista:
-            self.list.insert("", END, values=i)
-        self.desconecta_bd()
 
     def search_sped(self):
         self.conectar_bd()
@@ -499,18 +496,34 @@ class Speds(Relatorios, Functions):
                              bg=self.cor_dentro_frame,
                              highlightbackground=self.cor_bordas_frame,
                              highlightthickness=1)
-        self.frame_3.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.28)
+        self.frame_3.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.7)
 
 
         self.lb_caminho_banco = Label(self.frame_3, text="Caminho Banco", font=20, bg=self.cor_botoes)
-        self.lb_caminho_banco.place(rely=0.53, relx=0.01, relwidth=0.18)
+        self.lb_caminho_banco.place(rely=0.1, relx=0.01, relwidth=0.18)
 
         self.entry_caminho_banco = Entry(self.frame_3)
-        self.entry_caminho_banco.place(rely=0.53, relx=0.2, relwidth=0.48, relheight= 0.3)
+        self.entry_caminho_banco.place(rely=0.1, relx=0.2, relwidth=0.48)
 
+
+        self.lb_host = Label(self.frame_3, text= "Host", font= 20, bg= self.cor_botoes)
+        self.lb_host.place(rely= 0.3, relx= 0.01, relwidth= 0.18)
+
+        self.entry_host = Entry(self.frame_3)
+        self.entry_host.place(rely= 0.3, relx= 0.2, relwidth= 0.2)
+
+
+        self.lb_porta = Label(self.frame_3, text= "Porta", font= 20, bg= self.cor_botoes)
+        self.lb_porta.place(rely= 0.5, relx= 0.01, relwidth= 0.18)
+
+        self.entry_porta = Entry(self.frame_3)
+        self.entry_porta.place(rely= 0.5, relx= 0.2, relwidth= 0.2)
 
         self.bt_relat = Button(self.frame_3, text="Alterar banco", background=self.cor_botoes, bd=5, command= self.alterar_bd)
-        self.bt_relat.place(rely=0.53, relx=0.75, relwidth=0.15)
+        self.bt_relat.place(rely=0.7, relx=0.75, relwidth=0.15)
+
+        print(self.entry_host)
+        print(self.entry_porta)
 
     def frames_home(self):
         # self.frame_1 = Frame(self.window_sped,
