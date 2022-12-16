@@ -3,11 +3,11 @@ from calendar import isleap
 from datetime import datetime, date
 from tkinter import *
 from tkinter import ttk, messagebox
+from tkinter.ttk import Combobox
 import firebirdsql
 from reportlab.pdfgen import canvas
 
 window_sped = Tk()
-
 
 class Functions():
 
@@ -39,9 +39,9 @@ class Functions():
         print(self.host)
         print(self.porta)
 
-
     def desconecta_bd(self):
         self.conn.close()
+
 
     def search_sped(self):
         self.conectar_bd()
@@ -53,26 +53,6 @@ class Functions():
         self.contas = []
         self.lista_melhorada = []
 
-        # self.data_inicial = datetime.strptime(self.entry_data_inicial.get(), '%d/%m/%Y')
-        # self.data_final = datetime.strptime(self.entry_data_final.get(), '%d/%m/%Y')
-
-
-        # day = self.entry_data_inicial.get()[0] + self.entry_data_inicial.get()[1]
-        # mes = self.entry_data_inicial.get()[2] + self.entry_data_inicial.get()[3]
-        # ano = self.entry_data_inicial.get()[4] + self.entry_data_inicial.get()[5] + self.entry_data_inicial.get()[6] + self.entry_data_inicial.get()[7]
-        #
-        # data_inicial_new = day + '/' + mes + '/' + ano
-        #
-        # day = self.entry_data_final.get()[0] + self.entry_data_final.get()[1]
-        # mes = self.entry_data_final.get()[2] + self.entry_data_final.get()[3]
-        # ano = self.entry_data_final.get()[4] + self.entry_data_final.get()[5] + self.entry_data_final.get()[6] + \
-        #       self.entry_data_final.get()[7]
-        #
-        # data_final_new = day +'/'+ mes +'/' + ano
-
-
-
-
 
         try:
             self.data_inicial = datetime.strptime(self.entry_data_inicial.get(), '%d/%m/%Y')
@@ -80,7 +60,7 @@ class Functions():
         except:
             messagebox.showinfo("Relatorio de Saldo de Contas.", "Sem movimentações nesse periodo")
 
-        """ ----------- MONTAGEM DO SALDO ANTERIOR ----------"""
+        """ ----------- MONTAGEM DO SALDO ANTERIOR ---------- """
         mes_anterior = self.data_final.month - 1
         ano_anterior = self.data_inicial.year
 
@@ -88,9 +68,11 @@ class Functions():
             mes_anterior = 12
             ano_anterior -= 1
 
+
         self.data_inicial_anterior = self.data_inicial.replace(day=self.data_inicial.day, month=mes_anterior,
                                                                year=ano_anterior)
         self.data_final_anterior = self.data_final
+
 
         dia_fev = 0
         if isleap(self.data_inicial.year):
@@ -123,15 +105,6 @@ class Functions():
             self.data_final_anterior = self.data_final_anterior.replace(day=30, month=mes_anterior, year=ano_anterior)
         else:
             self.data_final_anterior = self.data_final_anterior.replace(day=31, month=mes_anterior, year=ano_anterior)
-        # if mes_anterior == (1 or 3) or (5 or 7) or (8 or 10) or 12:
-        #     self.data_final_anterior = self.data_final_anterior.replace(day= 31, month= mes_anterior, year= ano_anterior)
-        # else:
-        #     if mes_anterior == 4 or 6 or 9 or 11:
-        #         self.data_final_anterior = self.data_final_anterior.replace(day= 30, month= mes_anterior, year= ano_anterior)
-        #     else:
-        #         self.data_final_anterior = self.data_final_anterior.replace(day= dia_fev, month=mes_anterior, year= ano_anterior)
-
-        print(self.data_final_anterior.month)
 
         self.data_inicial_anterior = self.data_inicial_anterior.replace(day=self.data_inicial.day, month=1, year=2015)
 
@@ -464,24 +437,113 @@ class Speds(Relatorios, Functions):
     cor_texto_titulo = "Black"
     cor_botoes = "Silver"
     img = PhotoImage(
-       file="C:\\APS\\GenixGer\\Client\\FUNDO3.png")
+       file="C:\\APS\\GenixGer\\Client\\fundoHome.png")
     Label(window_sped, image=img).pack()
+
+    img2 = PhotoImage(
+        file="C:\\APS\\GenixGer\\Client\\FUNDO3.png")
+
+    img3 = PhotoImage(file= "C:\\APS\\GenixGer\\Client\\fundoConfig.png")
+
+    def center(self, page):
+        """ FUNÇÃO RESPONSAVEL POR CENTRALIZAR AS PAGES NA TELA"""
+
+        page.withdraw()
+        page.update_idletasks()  # Update "requested size" from geometry manager
+
+        x = (page.winfo_screenwidth() - page.winfo_reqwidth()) / 2
+        y = (page.winfo_screenheight() - page.winfo_reqheight()) / 2
+        page.geometry("+%d+%d" % (x, y))
+
+        # This seems to draw the window frame immediately, so only call deiconify()
+        # after setting correct window position
+        page.deiconify()
 
     def __init__(self):
         self.window_sped = window_sped
-        self.home()
+        self.homePage()
+
+        self.center(self.window_sped)
+
+        self.window_sped.mainloop()
+
+    def home(self):
+        self.home = Toplevel(self.window_sped)
+
+        self.home.title("Relatório de Saldo de Contas " + (" " * 50) + "Fênix Tecnologia")
+        self.home.geometry("350x350")
+        self.home.configure(background= self.cor_de_fundo)
+        self.home.resizable(True, True)
+
+        Label(self.home, image= self.img2).pack()
         self.frames_home()
         self.create_labels()
         self.create_buttons()
         self.list_frame()
-        # self.select_bd()
-        self.window_sped.mainloop()
+        self.center(self.home)
+        self.home.mainloop()
 
-    def home(self):
+
+    def acessarHome(self):
+        self.conectar_bd()
+
+        self.login = self.entry_login.get()
+        self.senha = self.entry_senha.get()
+
+        self.cur.execute("""
+                        select usu.usu_login, usu.usu_senha
+                        from usuarios usu
+                        """)
+
+        list_acesso = []
+
+        usuarios = self.cur.fetchall()
+        for i in usuarios:
+            list_acesso.append([i[0], i[1]])
+
+        erro = False
+        for i in list_acesso:
+            if self.login == i[0] and self.senha == i[1]:
+                print(i)
+                print("Logado")
+                erro = False
+                self.home()
+                break
+            else:
+                erro = True
+        if erro == True:
+            messagebox.showinfo("Relatorio de Saldo de Contas.", "ACESSO NEGADO! Tente Novamente")
+        self.desconecta_bd()
+
+
+    def homePage(self):
         self.window_sped.title("Relatório de Saldo de Contas " + (" " * 50) + "Fênix Tecnologia")
-        self.window_sped.geometry("350x350")
-        # self.window_sped.configure(background= self.cor_de_fundo)
+        self.window_sped.geometry("250x250")
         self.window_sped.resizable(True, True)
+
+        self.frame_4 = Frame(self.window_sped,
+                             bd= 4,
+                             bg= self.cor_dentro_frame,
+                             highlightbackground= self.cor_bordas_frame,
+                             highlightthickness= 1)
+        self.frame_4.place(rely= 0.1, relx= 0.05, relwidth= 0.9, relheight= 0.65)
+
+
+        self.lb_login = Label(self.frame_4, text= "Login", font= 15, bg= self.cor_botoes)
+        self.lb_login.place(rely= 0.1, relx=0.01, relwidth= 0.25)
+
+        self.entry_login = Combobox(window_sped, values= ['CHICO', 'IVANIRA', 'VITOR'])
+        self.entry_login.place(rely= 0.2, relx= 0.33, relwidth= 0.35)
+
+
+        self.lb_senha = Label(self.frame_4, text= "Senha", font= 15, bg= self.cor_botoes)
+        self.lb_senha.place(rely= 0.3, relx= 0.01, relwidth= 0.25)
+
+        self.entry_senha = Entry(self.frame_4, show= "*")
+        self.entry_senha.place(rely= 0.3, relx= 0.3, relwidth= 0.4, relheight= 0.13)
+
+        self.bt_entrar = Button(self.frame_4, text="Entrar", background=self.cor_botoes, bd=5, command= self.acessarHome)
+        self.bt_entrar.place(rely=0.55, relx=0.33, relwidth=0.3)
 
     def openNewWindow(self):
         self.new_window = Toplevel(self.window_sped)
@@ -489,7 +551,9 @@ class Speds(Relatorios, Functions):
         self.new_window.title("Configuração")
         self.new_window.geometry("700x300")
         self.new_window.resizable(False, False)
-        Label(self.new_window, image= self.img).pack()
+        self.center(self.new_window)
+
+        Label(self.new_window, image= self.img3).pack()
 
         self.frame_3 = Frame(self.new_window,
                              bd=4,
@@ -522,25 +586,25 @@ class Speds(Relatorios, Functions):
         self.bt_relat = Button(self.frame_3, text="Alterar banco", background=self.cor_botoes, bd=5, command= self.alterar_bd)
         self.bt_relat.place(rely=0.7, relx=0.75, relwidth=0.15)
 
+
+        self.entry_caminho_banco.insert(0, self.caminho_banco)
+        self.entry_host.insert(0, self.host)
+        self.entry_porta.insert(0, self.porta)
+
+
         print(self.entry_host)
         print(self.entry_porta)
 
     def frames_home(self):
-        # self.frame_1 = Frame(self.window_sped,
-        #                      bd= 4,
-        #                      bg= self.cor_dentro_frame,
-        #                      highlightbackground= self.cor_bordas_frame,
-        #                      highlightthickness= 5)
-        # self.frame_1.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.15)
 
-        self.frame_2 = Frame(self.window_sped,
+        self.frame_2 = Frame(self.home,
                             bd=4,
                             bg= self.cor_dentro_frame,
                             highlightbackground= self.cor_bordas_frame,
                             highlightthickness=1)
         self.frame_2.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.2)
 
-        self.frame_3 = Frame(self.window_sped,
+        self.frame_3 = Frame(self.home,
                                    bd= 4,
                                    bg= self.cor_dentro_frame,
                                    highlightbackground= self.cor_bordas_frame,
