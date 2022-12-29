@@ -1,0 +1,1 @@
+Colocar todas as imagens dentro desse arquivo dentro da pasta Client do Genix.

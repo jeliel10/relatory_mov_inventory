@@ -6,15 +6,30 @@ from tkinter import ttk, messagebox
 from tkinter.ttk import Combobox
 import firebirdsql
 from reportlab.pdfgen import canvas
+import sqlite3
 
 window_sped = Tk()
 
 class Functions():
 
-    caminho_banco = 'C:\\APS\\GenixGer\\Server\\Database\\UNIQUE.FDB'
-    host = 'localhost'
-    porta = 3050
+
+    def conectar_bd_sql(self):
+
+        self.conectar_bd_sqlite3()
+        self.cursor_lite3.execute("""
+                                    SELECT caminho_banco, host, porta
+                                    FROM relatorio;
+                                    """)
+
+        lista = self.cursor_lite3.fetchall()
+
+        self.caminho_banco = lista[0][0]
+        self.host = lista[0][1]
+        self.porta = lista[0][2]
+        self.desconectar_bd_sqlite3()
+
     def conectar_bd(self):
+
 
         print("Iniciando conexão")
         self.conn = firebirdsql.connect(
@@ -25,24 +40,94 @@ class Functions():
             password='masterkey'
         )
         self.cur = self.conn.cursor()
+
+
         print("Conectado ao Banco de Dados")
         print(self.caminho_banco)
 
-    """Função que vai alterar o caminho do banco com o que foi colocado na tela de config."""
-    def alterar_bd(self):
+    def salvar_bd_sqlite3(self):
 
         self.caminho_banco = self.entry_caminho_banco.get()
         self.host = self.entry_host.get()
         self.porta = self.entry_porta.get()
-        self.conectar_bd()
 
-        print(self.host)
-        print(self.porta)
+        self.conectar_bd_sqlite3()
+        self.cursor_lite3.execute("""
+                                INSERT INTO relatorio (codigo, caminho_banco, host, porta)
+                                 VALUES (?, ?, ?, ?)""",
+                            (0, self.caminho_banco, self.host, self.porta))
+        self.conn_lite3.commit()
+        self.desconectar_bd_sqlite3()
+
+    def conectar_bd_sqlite3(self):
+        self.conn_lite3 = sqlite3.connect("C:\\APS\\GenixGer\\Client\\banco_relatorio.bd")
+        self.cursor_lite3 = self.conn_lite3.cursor()
+
+    def desconectar_bd_sqlite3(self):
+        self.conn_lite3.close()
+
+    def mostrar_bd_sqlite3(self):
+        self.conectar_bd_sqlite3()
+        self.cursor_lite3.execute("""
+                            SELECT caminho_banco, host, porta
+                            FROM relatorio;
+                            """)
+        lista = self.cursor_lite3.fetchall()
+
+        new_lista = [[0, 0, 0, 0]]
+
+        self.entry_caminho_banco.insert(0, lista[0][0])
+        self.entry_host.insert(0, lista[0][1])
+        self.entry_porta.insert(0, lista[0][2])
+        self.desconectar_bd_sqlite3()
+
+    """Função que vai alterar o caminho do banco com o que foi colocado na tela de config."""
+    def alterar_bd(self):
+
+        try:
+            self.caminho_banco = self.entry_caminho_banco.get()
+            self.host = self.entry_host.get()
+            self.porta = self.entry_porta.get()
+            self.conectar_bd()
+
+            messagebox.showinfo("Configuração", "Banco alterado!")
+            self.conectar_bd_sqlite3()
+            self.cursor_lite3.execute("""
+                                    UPDATE  relatorio SET caminho_banco = ?, host = ?, porta = ?
+                                    WHERE codigo = ?""",
+                                (self.caminho_banco, self.host, self.porta, 0))
+            self.conn_lite3.commit()
+            self.desconectar_bd_sqlite3()
+
+            print(self.caminho_banco)
+            print(self.host)
+            print(self.porta)
+
+            self.new_window.destroy()
+
+
+        except:
+            messagebox.showinfo("Configuração", "Banco não encontrado. Tente Novamente!")
 
     def desconecta_bd(self):
         self.conn.close()
 
+    def monta_tabelas(self):
+        self.conectar_bd_sqlite3()
 
+        print("Banco de dados conectado")
+
+        self.cursor_lite3.execute("""
+                        CREATE TABLE IF NOT EXISTS relatorio(
+                            codigo INTEGER PRIMARY KEY,
+                            caminho_banco VARCHAR(200),
+                            host VARCHAR(200) NOT NULL,
+                            porta INTEGER NOT NULL
+                        );
+                    """)
+        self.conn_lite3.commit()
+        print("Banco de dados criado")
+        self.desconectar_bd_sqlite3()
     def search_sped(self):
         self.conectar_bd()
         self.list.delete(*self.list.get_children())
@@ -431,19 +516,21 @@ class Relatorios(Functions):
 
 
 class Speds(Relatorios, Functions):
+
+
     cor_de_fundo = "LightSteelBlue"
     cor_dentro_frame = "LightSteelBlue"
     cor_bordas_frame = "Black"
     cor_texto_titulo = "Black"
     cor_botoes = "Silver"
-    img = PhotoImage(
-       file="C:\\APS\\GenixGer\\Client\\fundoHome.png")
-    Label(window_sped, image=img).pack()
+    cor_fundo = "White"
+    # Label(window_sped, image=img).pack()
 
     img2 = PhotoImage(
         file="C:\\APS\\GenixGer\\Client\\FUNDO3.png")
 
-    img3 = PhotoImage(file= "C:\\APS\\GenixGer\\Client\\fundoConfig.png")
+    img4 = PhotoImage(file= "C:\\APS\\GenixGer\\Client\\fenix8.png")
+    # Label(window_sped, image= img4).pack()
 
     def center(self, page):
         """ FUNÇÃO RESPONSAVEL POR CENTRALIZAR AS PAGES NA TELA"""
@@ -464,16 +551,19 @@ class Speds(Relatorios, Functions):
         self.homePage()
 
         self.center(self.window_sped)
-
+        self.monta_tabelas()
         self.window_sped.mainloop()
 
     def home(self):
-        self.home = Toplevel(self.window_sped)
 
-        self.home.title("Relatório de Saldo de Contas " + (" " * 50) + "Fênix Tecnologia")
+        # self.home = Toplevel(self.window_sped)
+        self.home = self.window_sped
+
+        self.home.title("Relatório de Saldo de Contas ")
         self.home.geometry("350x350")
         self.home.configure(background= self.cor_de_fundo)
         self.home.resizable(True, True)
+
 
         Label(self.home, image= self.img2).pack()
         self.frames_home()
@@ -481,12 +571,13 @@ class Speds(Relatorios, Functions):
         self.create_buttons()
         self.list_frame()
         self.center(self.home)
+
         self.home.mainloop()
 
 
     def acessarHome(self):
+        self.conectar_bd_sql()
         self.conectar_bd()
-
         self.login = self.entry_login.get()
         self.senha = self.entry_senha.get()
 
@@ -517,83 +608,87 @@ class Speds(Relatorios, Functions):
 
 
     def homePage(self):
-        self.window_sped.title("Relatório de Saldo de Contas " + (" " * 50) + "Fênix Tecnologia")
-        self.window_sped.geometry("250x250")
+        self.window_sped.title(" ")
+        self.window_sped.geometry("500x200")
         self.window_sped.resizable(True, True)
+        self.window_sped.configure(background= self.cor_fundo)
 
         self.frame_4 = Frame(self.window_sped,
                              bd= 4,
-                             bg= self.cor_dentro_frame,
-                             highlightbackground= self.cor_bordas_frame,
-                             highlightthickness= 1)
-        self.frame_4.place(rely= 0.1, relx= 0.05, relwidth= 0.9, relheight= 0.65)
+                             bg= self.cor_fundo,
+                             highlightthickness= 0)
+        self.frame_4.place(rely= 0.01, relx= 0.4, relwidth= 0.48, relheight= 0.9)
 
+        self.frame_5 = Frame(self.window_sped,
+                             bd= 4,
+                             bg= self.cor_fundo,
+                             highlightthickness= 0)
+        Label(self.frame_5, image= self.img4).pack()
+        self.frame_5.place(rely= 0.01, relx= 0.05, relwidth= 0.4, relheight= 0.9)
 
-        self.lb_login = Label(self.frame_4, text= "Login", font= 15, bg= self.cor_botoes)
-        self.lb_login.place(rely= 0.1, relx=0.01, relwidth= 0.25)
+        self.lb_login = Label(self.frame_4, text= "Usuário", font= "-weight bold -size 8", bg= self.cor_fundo)
+        self.lb_login.place(rely= 0.01, relx=0.3, relwidth= 0.25)
 
         self.entry_login = Combobox(window_sped, values= ['CHICO', 'IVANIRA', 'VITOR'])
-        self.entry_login.place(rely= 0.2, relx= 0.33, relwidth= 0.35)
+        self.entry_login.place(rely= 0.14, relx= 0.56, relwidth= 0.252)
 
 
-        self.lb_senha = Label(self.frame_4, text= "Senha", font= 15, bg= self.cor_botoes)
-        self.lb_senha.place(rely= 0.3, relx= 0.01, relwidth= 0.25)
+        self.lb_senha = Label(self.frame_4, text= "Senha", font= "-weight bold -size 8", bg= self.cor_fundo)
+        self.lb_senha.place(rely= 0.34, relx= 0.28, relwidth= 0.25)
 
-        self.entry_senha = Entry(self.frame_4, show= "*")
-        self.entry_senha.place(rely= 0.3, relx= 0.3, relwidth= 0.4, relheight= 0.13)
+        self.entry_senha = Entry(self.frame_4, show= "*", highlightthickness= 1, highlightbackground= "Gray")
+        self.entry_senha.place(rely= 0.46, relx= 0.33, relwidth= 0.54, relheight= 0.12)
 
         self.bt_entrar = Button(self.frame_4, text="Entrar", background=self.cor_botoes, bd=5, command= self.acessarHome)
-        self.bt_entrar.place(rely=0.55, relx=0.33, relwidth=0.3)
+        self.bt_entrar.place(rely=0.65, relx=0.3, relwidth=0.25)
+
+        self.bt_config = Button(self.frame_4, text= "Config", background= self.cor_botoes, bd= 5, command= self.openNewWindow)
+        self.bt_config.place(rely= 0.65, relx= 0.66, relwidth=0.25)
+
 
     def openNewWindow(self):
         self.new_window = Toplevel(self.window_sped)
 
         self.new_window.title("Configuração")
-        self.new_window.geometry("700x300")
+        self.new_window.geometry("500x120")
         self.new_window.resizable(False, False)
         self.center(self.new_window)
 
-        Label(self.new_window, image= self.img3).pack()
+        # Label(self.new_window, image= self.img3).pack()
 
         self.frame_3 = Frame(self.new_window,
-                             bd=4,
-                             bg=self.cor_dentro_frame,
-                             highlightbackground=self.cor_bordas_frame,
-                             highlightthickness=1)
-        self.frame_3.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.7)
-
-
+                            bd=4,
+                            bg=self.cor_dentro_frame,
+                            highlightbackground=self.cor_bordas_frame,
+                            highlightthickness=1)
+        self.frame_3.place(rely=0.01, relx=0.01, relwidth=0.98, relheight=0.95)
+        #
+        #
         self.lb_caminho_banco = Label(self.frame_3, text="Caminho Banco", font=20, bg=self.cor_botoes)
-        self.lb_caminho_banco.place(rely=0.1, relx=0.01, relwidth=0.18)
-
+        self.lb_caminho_banco.place(rely=0.1, relx=0.01, relwidth=0.29)
+        #
         self.entry_caminho_banco = Entry(self.frame_3)
-        self.entry_caminho_banco.place(rely=0.1, relx=0.2, relwidth=0.48)
-
-
+        self.entry_caminho_banco.place(rely=0.1, relx=0.32, relwidth=0.66, relheight= 0.22)
+        #
+        #
         self.lb_host = Label(self.frame_3, text= "Host", font= 20, bg= self.cor_botoes)
-        self.lb_host.place(rely= 0.3, relx= 0.01, relwidth= 0.18)
-
+        self.lb_host.place(rely= 0.4, relx= 0.01, relwidth= 0.1)
+        #
         self.entry_host = Entry(self.frame_3)
-        self.entry_host.place(rely= 0.3, relx= 0.2, relwidth= 0.2)
-
-
+        self.entry_host.place(rely= 0.4, relx= 0.13, relwidth= 0.2, relheight= 0.22)
+        #
+        #
         self.lb_porta = Label(self.frame_3, text= "Porta", font= 20, bg= self.cor_botoes)
-        self.lb_porta.place(rely= 0.5, relx= 0.01, relwidth= 0.18)
-
+        self.lb_porta.place(rely= 0.7, relx= 0.01, relwidth= 0.1)
+        # #
         self.entry_porta = Entry(self.frame_3)
-        self.entry_porta.place(rely= 0.5, relx= 0.2, relwidth= 0.2)
-
+        self.entry_porta.place(rely= 0.7, relx= 0.13, relwidth= 0.2, relheight= 0.22)
+        # #
         self.bt_relat = Button(self.frame_3, text="Alterar banco", background=self.cor_botoes, bd=5, command= self.alterar_bd)
-        self.bt_relat.place(rely=0.7, relx=0.75, relwidth=0.15)
+        self.bt_relat.place(rely=0.65, relx=0.75, relwidth=0.22)
 
+        self.mostrar_bd_sqlite3()
 
-        self.entry_caminho_banco.insert(0, self.caminho_banco)
-        self.entry_host.insert(0, self.host)
-        self.entry_porta.insert(0, self.porta)
-
-
-        print(self.entry_host)
-        print(self.entry_porta)
 
     def frames_home(self):
 
@@ -609,7 +704,7 @@ class Speds(Relatorios, Functions):
                                    bg= self.cor_dentro_frame,
                                    highlightbackground= self.cor_bordas_frame,
                                    highlightthickness= 1)
-        self.frame_3.place(rely= 0.25, relx= 0.01, relwidth= 0.98, relheight= 0.5)
+        self.frame_3.place(rely= 0.25, relx= 0.01, relwidth= 0.98, relheight= 0.35)
         # Label(self.frame_3, image= self.img).pack()
 
     def format_data_inicial(self, event=None):
@@ -680,10 +775,10 @@ class Speds(Relatorios, Functions):
         # self.entry_data_inicial.pack()
 
         self.lb_data_final = Label(self.frame_3, text="Data Final:", font=90, bg=self.cor_botoes)
-        self.lb_data_final.place(rely=0.3, relx=0.08, relwidth=0.25)
+        self.lb_data_final.place(rely=0.35, relx=0.08, relwidth=0.25)
 
         self.entry_data_final = Entry(self.frame_3)
-        self.entry_data_final.place(rely=0.3, relx=0.4, relwidth=0.23)
+        self.entry_data_final.place(rely=0.35, relx=0.4, relwidth=0.23)
         self.entry_data_final.bind("<KeyRelease>", self.format_data_final)
 
         date_now = date.today()
@@ -741,14 +836,11 @@ class Speds(Relatorios, Functions):
 
         self.bt_relat = Button(self.frame_3, text="Visualizar", background=self.cor_botoes, bd=5,
                                command=self.geraRelatCliente)
-        self.bt_relat.place(rely=0.5, relx=0.08, relwidth=0.2)
+        self.bt_relat.place(rely=0.65, relx=0.22, relwidth=0.2)
 
         self.bt_quit = Button(self.frame_3, text="Sair", background=self.cor_botoes, bd=5,
                               command=self.window_sped.destroy)
-        self.bt_quit.place(rely=0.5, relx=0.4, relwidth=0.12)
-
-        self.bt_config = Button(self.frame_3, text= "Config", background= self.cor_botoes, bd= 5, command= self.openNewWindow)
-        self.bt_config.place(rely= 0.5, relx= 0.8, relwidth= 0.17)
+        self.bt_quit.place(rely=0.65, relx=0.62, relwidth=0.15)
 
     def list_frame(self):
         self.list = ttk.Treeview(self.frame_3, height=3, columns=("col1", "col2", "col3", "col4", "col5", "col6"))
@@ -769,14 +861,7 @@ class Speds(Relatorios, Functions):
         self.list.column("#4", width=100)
         self.list.column("#5", width=100)
         self.list.column("#6", width=100)
-        # self.list.column("#7", width= 500)
 
-        # self.list.place(rely= 0.01, relx= 0.01, relwidth= 0.96, relheight= 0.98)
-
-        # self.scrollList = Scrollbar(self.frame_3, orient= "vertical")
-        # self.list.configure(yscroll= self.scrollList.set)
-        # self.scrollList.place(relx= 0.97, rely= 0.01, relwidth= 0.02, relheight= 0.98)
-        # self.list.bind("<Double-1>", self.OnDoubleClick)
 
 
 Speds()
